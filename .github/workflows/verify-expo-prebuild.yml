@@ -1,0 +1,33 @@
+name: Verify Expo iOS prebuild
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-ios-prebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify Expo config
+        run: npx expo config --type public
+
+      - name: Generate iOS native project
+        env:
+          EXPO_NO_GIT_STATUS: '1'
+        run: npx expo prebuild --platform ios --clean --no-install
