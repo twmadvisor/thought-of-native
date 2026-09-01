@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Linking, Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native'
 import type { Session } from '@supabase/supabase-js'
 import { ThoughtDots } from '../components/ThoughtDots'
 import { AvatarCircle } from '../components/AvatarCircle'
@@ -114,15 +114,17 @@ export function HomeScreen({ session, onOpenPerson, onOpenRequests, onOpenGroups
           </>
         )}
         <Modal transparent animationType="slide" visible={addOpen} onRequestClose={() => setAddOpen(false)}>
-          <View style={styles.modalBackdrop}><View style={styles.sheet}>
-            <Text style={styles.heading}>Add someone</Text>
-            <Text style={styles.smallMuted}>Enter their exact phone number.</Text>
-            <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" keyboardType="phone-pad" style={styles.input} />
-            <Button label={requesting ? 'Sending…' : 'Send request'} onPress={submitRequest} disabled={requesting} />
-            {!!requestMessage && <Text style={styles.notice}>{requestMessage}</Text>}
-            {!!requestMessage && !!requestedPhone && <Pressable style={styles.secondaryButton} onPress={() => Linking.openURL(`sms:${requestedPhone}?&body=${encodeURIComponent('I’m using Thought Of to stay a little closer between conversations. Join me: https://twmadvisor.github.io/thought-of-site/')}`)}><Text style={styles.secondaryButtonText}>Text them</Text></Pressable>}
-            <Pressable onPress={() => { setAddOpen(false); setRequestMessage(''); setRequestedPhone('') }}><Text style={styles.link}>Done</Text></Pressable>
-          </View></View>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={styles.modalBackdrop}><View style={styles.sheet}>
+              <Text style={styles.heading}>Add someone</Text>
+              <Text style={styles.smallMuted}>Enter their exact phone number.</Text>
+              <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" keyboardType="phone-pad" style={styles.input} />
+              <Button label={requesting ? 'Sending…' : 'Send request'} onPress={submitRequest} disabled={requesting} />
+              {!!requestMessage && <Text style={styles.notice}>{requestMessage}</Text>}
+              {!!requestMessage && !!requestedPhone && <Pressable style={styles.secondaryButton} onPress={() => Linking.openURL(`sms:${requestedPhone}?&body=${encodeURIComponent('I’m using Thought Of to stay a little closer between conversations. Join me: https://twmadvisor.github.io/thought-of-site/')}`)}><Text style={styles.secondaryButtonText}>Text them</Text></Pressable>}
+              <Pressable onPress={() => { setAddOpen(false); setRequestMessage(''); setRequestedPhone('') }}><Text style={styles.link}>Done</Text></Pressable>
+            </View></View>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </SafeAreaView>
