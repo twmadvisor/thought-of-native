@@ -16,6 +16,26 @@ import { Button } from '../components/Common'
 
 const logo = require('../../assets/thought-of-logo.png')
 
+function normalizePhone(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const digits = trimmed.replace(/\D/g, '')
+
+  // Preserve explicitly entered international numbers.
+  if (trimmed.startsWith('+')) {
+    return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null
+  }
+
+  // Default ordinary 10-digit numbers to the US/Canada country code.
+  if (digits.length === 10) return `+1${digits}`
+
+  // Accept a US/Canada number when the user already typed the leading 1.
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+
+  return null
+}
+
 export function PhoneAuth() {
   const [step, setStep] = useState<'phone' | 'code'>('phone')
   const [phone, setPhone] = useState('')
@@ -23,18 +43,32 @@ export function PhoneAuth() {
   const [busy, setBusy] = useState(false)
 
   async function sendCode() {
-    if (!phone.trim()) return
+    const normalizedPhone = normalizePhone(phone)
+    if (!normalizedPhone) {
+      return Alert.alert(
+        'Check phone number',
+        'Enter a 10-digit US/Canada number, or include + and the country code for an international number.',
+      )
+    }
+
     setBusy(true)
-    const { error } = await supabase.auth.signInWithOtp({ phone: phone.trim() })
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalizedPhone })
     setBusy(false)
     if (error) return Alert.alert('Could not send code', error.message)
+
+    setPhone(normalizedPhone)
     setStep('code')
   }
 
   async function verifyCode() {
+    const normalizedPhone = normalizePhone(phone)
+    if (!normalizedPhone) {
+      return Alert.alert('Check phone number', 'Please go back and enter your phone number again.')
+    }
+
     setBusy(true)
     const { error } = await supabase.auth.verifyOtp({
-      phone: phone.trim(),
+      phone: normalizedPhone,
       token: code.trim(),
       type: 'sms',
     })
