@@ -74,10 +74,7 @@ export function HomeScreen({ session, onOpenPerson, onOpenRequests, onOpenGroups
         <View style={styles.header}>
           <Text style={styles.homeTitle}>{currentTitle}</Text>
           <View style={styles.headerActions}>
-            <Pressable style={styles.requestButton} onPress={onOpenRequests}>
-              <Text style={styles.small}>Requests</Text>
-              {incoming.length > 0 && <View style={{ transform: [{ scale: 0.7 }] }}><ThoughtDots filled /></View>}
-            </Pressable>
+            <Pressable style={styles.requestButton} onPress={onOpenRequests}><Text style={styles.small}>Requests</Text></Pressable>
             <Pressable style={styles.headerAccount} onPress={onOpenAccount}><Text style={styles.small}>Account</Text></Pressable>
           </View>
         </View>
