@@ -3,7 +3,8 @@ name: Import recovered Thought Of source
 on:
   push:
     paths:
-      - thought-of-native-v1.zip
+      - 'thought-of-native-v1*.zip'
+      - '.github/workflows/import-recovered-source.yml'
 
 permissions:
   contents: write
@@ -15,12 +16,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Unpack recovered mobile project
+      - name: Find and unpack recovered mobile project
+        shell: bash
         run: |
-          unzip -o thought-of-native-v1.zip -d .
-          rm thought-of-native-v1.zip
+          set -euo pipefail
+          zip_file="$(find . -maxdepth 1 -type f -name 'thought-of-native-v1*.zip' -print -quit)"
+          if [ -z "$zip_file" ]; then
+            echo "No recovered ZIP found, nothing to import."
+            exit 0
+          fi
+          unzip -o "$zip_file" -d .
+          rm "$zip_file"
 
       - name: Align current Expo SDK 57 patch
+        if: ${{ hashFiles('package.json') != '' }}
         run: |
           python3 - <<'PY'
           import json
@@ -35,9 +44,14 @@ jobs:
           PY
 
       - name: Commit imported source
+        if: ${{ hashFiles('package.json') != '' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
           git commit -m "Import recovered Thought Of native app source"
           git push
