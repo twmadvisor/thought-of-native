@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "thought of",
+    "slug": "thought-of",
+    "version": "0.3.0",
+    "orientation": "portrait",
+    "icon": "./assets/thought-of-logo-1024.png",
+    "userInterfaceStyle": "light",
+    "scheme": "thoughtof",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.thoughtof.app",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.thoughtof.app"
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow thought of to choose a profile photo."
+        }
+      ]
+    ]
+  }
+}
