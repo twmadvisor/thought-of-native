@@ -1,0 +1,43 @@
+name: Import recovered Thought Of source
+
+on:
+  push:
+    paths:
+      - thought-of-native-v1.zip
+
+permissions:
+  contents: write
+
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Unpack recovered mobile project
+        run: |
+          unzip -o thought-of-native-v1.zip -d .
+          rm thought-of-native-v1.zip
+
+      - name: Align current Expo SDK 57 patch
+        run: |
+          python3 - <<'PY'
+          import json
+          path = 'package.json'
+          with open(path, encoding='utf-8') as f:
+              package = json.load(f)
+          package['dependencies']['expo'] = '~57.0.17'
+          package['dependencies']['@supabase/supabase-js'] = '2.57.4'
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(package, f, indent=2)
+              f.write('\n')
+          PY
+
+      - name: Commit imported source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import recovered Thought Of native app source"
+          git push
