@@ -11,6 +11,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.thoughtof.app",
       "infoPlist": {
+        "CFBundleDisplayName": "thought of",
         "UIBackgroundModes": [
           "remote-notification"
         ]
