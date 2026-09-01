@@ -23,8 +23,16 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Typecheck app
+        run: npm run typecheck
+
       - name: Verify Expo config
         run: npx expo config --type public
+
+      - name: Bundle production iOS JavaScript
+        env:
+          NODE_ENV: production
+        run: npx expo export --platform ios --output-dir dist-test
 
       - name: Generate iOS native project
         env:
