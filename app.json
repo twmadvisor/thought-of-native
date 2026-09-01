@@ -28,6 +28,11 @@
           "photosPermission": "Allow thought of to choose a profile photo."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a6a1c542-e326-4642-8e47-e585d603c218"
+      }
+    }
   }
 }
