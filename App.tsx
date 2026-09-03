@@ -15,6 +15,7 @@ import { AccountScreen } from './src/screens/AccountScreen'
 import { ArchivesScreen } from './src/screens/ArchivesScreen'
 import { ArchivedHistoryScreen } from './src/screens/ArchivedHistoryScreen'
 import { loadPeople, type Person } from './src/api/connections'
+import { ensureMyEncryptionIdentity } from './src/api/e2ee'
 import type { ArchivedPerson } from './src/api/relationships'
 
 type Screen =
@@ -56,6 +57,7 @@ export default function App() {
   useEffect(() => {
     if (!session?.user.id || !profileReady) return
     registerNativePush(session.user.id).catch(() => undefined)
+    ensureMyEncryptionIdentity(session.user.id).catch(() => undefined)
   }, [profileReady, session?.user.id])
 
   useEffect(() => {
