@@ -28,6 +28,10 @@
         {
           "photosPermission": "Allow thought of to choose a profile photo."
         }
+      ],
+      [
+        "react-native-libsodium",
+        {}
       ]
     ],
     "extra": {
