@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import type { Session } from '@supabase/supabase-js'
 
 import { supabase } from './src/lib/supabase'
 import { registerNativePush } from './src/lib/notifications'
-import { Center } from './src/components/Common'
+import { Button, Center } from './src/components/Common'
+import { styles } from './src/theme'
 import { PhoneAuth, ProfileSetup } from './src/screens/AuthScreens'
 import { HomeScreen } from './src/screens/HomeScreen'
 import { RequestsScreen } from './src/screens/RequestsScreen'
@@ -33,6 +34,8 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [booting, setBooting] = useState(true)
   const [profileReady, setProfileReady] = useState<boolean | null>(null)
+  const [encryptionReady, setEncryptionReady] = useState<boolean | null>(null)
+  const [recoveryRequired, setRecoveryRequired] = useState(false)
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   const [pendingNotification, setPendingNotification] = useState<PendingNotification | null>(null)
 
@@ -55,10 +58,54 @@ export default function App() {
   }, [session?.user.id])
 
   useEffect(() => {
-    if (!session?.user.id || !profileReady) return
-    registerNativePush(session.user.id).catch(() => undefined)
-    ensureMyEncryptionIdentity(session.user.id).catch(() => undefined)
+    if (!session?.user.id || !profileReady) {
+      setEncryptionReady(null)
+      setRecoveryRequired(false)
+      return
+    }
+
+    const userId = session.user.id
+    setEncryptionReady(null)
+    setRecoveryRequired(false)
+
+    registerNativePush(userId).catch(() => undefined)
+
+    ensureMyEncryptionIdentity(userId)
+      .then((state) => {
+        if (state.status === 'recovery_required') {
+          setRecoveryRequired(true)
+          setEncryptionReady(false)
+          return
+        }
+
+        setEncryptionReady(true)
+      })
+      .catch(() => {
+        setEncryptionReady(true)
+      })
   }, [profileReady, session?.user.id])
+
+  const retryEncryptionRecovery = async () => {
+    if (!session?.user.id) return
+
+    setEncryptionReady(null)
+    setRecoveryRequired(false)
+
+    try {
+      const state = await ensureMyEncryptionIdentity(session.user.id)
+
+      if (state.status === 'recovery_required') {
+        setRecoveryRequired(true)
+        setEncryptionReady(false)
+        return
+      }
+
+      setEncryptionReady(true)
+    } catch {
+      setRecoveryRequired(true)
+      setEncryptionReady(false)
+    }
+  }
 
   useEffect(() => {
     const consume = (response: Notifications.NotificationResponse | null) => {
@@ -86,9 +133,28 @@ export default function App() {
     }
   }, [pendingNotification, profileReady, session?.user.id])
 
-  if (booting || (session && profileReady === null)) return <Center><ActivityIndicator color="#111" /></Center>
+  if (booting || (session && profileReady === null) || (session && profileReady && encryptionReady === null)) {
+    return <Center><ActivityIndicator color="#111" /></Center>
+  }
+
   if (!session) return <PhoneAuth />
-  if (!profileReady) return <ProfileSetup userId={session.user.id} onDone={() => setProfileReady(true)} />
+
+  if (!profileReady) {
+    return <ProfileSetup userId={session.user.id} onDone={() => setProfileReady(true)} />
+  }
+
+  if (recoveryRequired) {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.heading}>Restoring your encrypted history</Text>
+        <Text style={styles.mutedCentered}>
+          Thought Of found your account, but your encryption key hasn&apos;t restored from iCloud Keychain yet. Make sure this iPhone is signed in to the same Apple Account, then try again.
+        </Text>
+        <Button label="Try again" onPress={retryEncryptionRecovery} />
+        <Button label="Sign out" onPress={() => supabase.auth.signOut()} />
+      </View>
+    )
+  }
 
   if (screen.name === 'person') return <PersonScreen session={session} person={screen.person} onBack={() => setScreen({ name: 'home' })} onRemoved={() => setScreen({ name: 'home' })} />
   if (screen.name === 'requests') return <RequestsScreen onBack={() => setScreen({ name: 'home' })} />
