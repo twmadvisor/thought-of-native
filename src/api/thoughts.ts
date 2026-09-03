@@ -1,3 +1,5 @@
+import { getConnectionKey } from './e2ee'
+import { decryptThought, encryptThought, E2EE_VERSION } from '../lib/e2ee'
 import { supabase } from '../lib/supabase'
 
 export type Thought = {
@@ -8,6 +10,17 @@ export type Thought = {
   created_at: string
 }
 
+type StoredThought = {
+  id: string
+  connection_id: string
+  sender_id: string
+  body: string | null
+  ciphertext: string | null
+  nonce: string | null
+  encryption_version: number | null
+  created_at: string
+}
+
 export type Reaction = {
   thought_id: string
   user_id: string
@@ -15,15 +28,56 @@ export type Reaction = {
   created_at: string
 }
 
-export async function loadThoughts(connectionId: string): Promise<Thought[]> {
+export async function loadThoughts(connectionId: string, userId: string): Promise<Thought[]> {
   const { data, error } = await supabase
     .from('thoughts')
-    .select('id,connection_id,sender_id,body,created_at')
+    .select('id,connection_id,sender_id,body,ciphertext,nonce,encryption_version,created_at')
     .eq('connection_id', connectionId)
     .order('created_at', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as Thought[]
+
+  const stored = (data ?? []) as StoredThought[]
+  const hasEncrypted = stored.some((thought) => thought.encryption_version !== null)
+  const connectionKey = hasEncrypted ? await getConnectionKey(connectionId, userId) : null
+
+  return stored.map((thought) => {
+    if (
+      thought.encryption_version === E2EE_VERSION
+      && thought.ciphertext
+      && thought.nonce
+      && connectionKey
+    ) {
+      return {
+        id: thought.id,
+        connection_id: thought.connection_id,
+        sender_id: thought.sender_id,
+        body: decryptThought(
+          {
+            ciphertext: thought.ciphertext,
+            nonce: thought.nonce,
+            encryptionVersion: E2EE_VERSION,
+          },
+          thought.connection_id,
+          thought.sender_id,
+          connectionKey,
+        ),
+        created_at: thought.created_at,
+      }
+    }
+
+    if (thought.encryption_version === null && thought.body !== null) {
+      return {
+        id: thought.id,
+        connection_id: thought.connection_id,
+        sender_id: thought.sender_id,
+        body: thought.body,
+        created_at: thought.created_at,
+      }
+    }
+
+    throw new Error('This Thought uses an unsupported encryption format.')
+  })
 }
 
 export async function loadReactions(thoughtIds: string[]): Promise<Reaction[]> {
@@ -41,20 +95,31 @@ export async function shareThought(connectionId: string, senderId: string, body:
   const clean = body.trim().slice(0, 60)
   if (!clean) return null
 
+  const connectionKey = await getConnectionKey(connectionId, senderId)
+  const encrypted = encryptThought(clean, connectionId, senderId, connectionKey)
+
   const { data, error } = await supabase
     .from('thoughts')
-    .insert({ connection_id: connectionId, sender_id: senderId, body: clean })
-    .select('id,connection_id,sender_id,body,created_at')
+    .insert({
+      connection_id: connectionId,
+      sender_id: senderId,
+      body: null,
+      ciphertext: encrypted.ciphertext,
+      nonce: encrypted.nonce,
+      encryption_version: encrypted.encryptionVersion,
+    })
+    .select('id,connection_id,sender_id,created_at')
     .single()
 
   if (error) throw error
 
   // Notification delivery is best-effort. The Thought itself is already saved.
+  // The notification service receives the Thought id, not the encrypted message body.
   supabase.functions.invoke('send-thought-notification', {
     body: { thought_id: data.id },
   }).catch(() => undefined)
 
-  return data as Thought
+  return { ...data, body: clean } as Thought
 }
 
 export async function rethinkThought(thoughtId: string) {
