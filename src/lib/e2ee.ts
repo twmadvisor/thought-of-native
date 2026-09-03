@@ -75,8 +75,8 @@ export function openConnectionKey(envelope: string, identitySeed: Uint8Array): U
   return opened
 }
 
-function thoughtAad(connectionId: string, senderId: string): Uint8Array {
-  return new TextEncoder().encode(`thought-of:v${E2EE_VERSION}:${connectionId}:${senderId}`)
+function thoughtAad(connectionId: string, senderId: string): string {
+  return `thought-of:v${E2EE_VERSION}:${connectionId}:${senderId}`
 }
 
 export function encryptThought(

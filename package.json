@@ -13,15 +13,16 @@
     "@supabase/supabase-js": "2.57.4",
     "expo": "~57.0.17",
     "expo-constants": "~57.0.8",
+    "expo-dev-client": "~57.0.18",
     "expo-device": "~57.0.1",
+    "expo-image-picker": "~57.0.7",
     "expo-notifications": "~57.0.8",
     "expo-sqlite": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-keychain": "^10.0.0",
     "react-native-libsodium": "^1.7.0",
-    "react-native-url-polyfill": "^2.0.0",
-    "expo-image-picker": "~57.0.7"
+    "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
