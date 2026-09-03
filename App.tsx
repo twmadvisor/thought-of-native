@@ -36,6 +36,7 @@ export default function App() {
   const [profileReady, setProfileReady] = useState<boolean | null>(null)
   const [encryptionReady, setEncryptionReady] = useState<boolean | null>(null)
   const [recoveryRequired, setRecoveryRequired] = useState(false)
+  const [keyMismatch, setKeyMismatch] = useState(false)
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   const [pendingNotification, setPendingNotification] = useState<PendingNotification | null>(null)
 
@@ -61,12 +62,14 @@ export default function App() {
     if (!session?.user.id || !profileReady) {
       setEncryptionReady(null)
       setRecoveryRequired(false)
+      setKeyMismatch(false)
       return
     }
 
     const userId = session.user.id
     setEncryptionReady(null)
     setRecoveryRequired(false)
+    setKeyMismatch(false)
 
     registerNativePush(userId).catch(() => undefined)
 
@@ -74,6 +77,12 @@ export default function App() {
       .then((state) => {
         if (state.status === 'recovery_required') {
           setRecoveryRequired(true)
+          setEncryptionReady(false)
+          return
+        }
+
+        if (state.status === 'key_mismatch') {
+          setKeyMismatch(true)
           setEncryptionReady(false)
           return
         }
@@ -90,12 +99,19 @@ export default function App() {
 
     setEncryptionReady(null)
     setRecoveryRequired(false)
+    setKeyMismatch(false)
 
     try {
       const state = await ensureMyEncryptionIdentity(session.user.id)
 
       if (state.status === 'recovery_required') {
         setRecoveryRequired(true)
+        setEncryptionReady(false)
+        return
+      }
+
+      if (state.status === 'key_mismatch') {
+        setKeyMismatch(true)
         setEncryptionReady(false)
         return
       }
@@ -141,6 +157,19 @@ export default function App() {
 
   if (!profileReady) {
     return <ProfileSetup userId={session.user.id} onDone={() => setProfileReady(true)} />
+  }
+
+  if (keyMismatch) {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.heading}>Your encryption key doesn&apos;t match</Text>
+        <Text style={styles.mutedCentered}>
+          Thought Of can&apos;t safely open your encrypted history on this device. Make sure this iPhone is signed in to the same Apple Account, then try again.
+        </Text>
+        <Button label="Try again" onPress={retryEncryptionRecovery} />
+        <Button label="Sign out" onPress={() => supabase.auth.signOut()} />
+      </View>
+    )
   }
 
   if (recoveryRequired) {
