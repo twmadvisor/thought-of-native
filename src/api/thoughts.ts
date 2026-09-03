@@ -28,7 +28,7 @@ export type Reaction = {
   created_at: string
 }
 
-export async function loadThoughts(connectionId: string, userId: string): Promise<Thought[]> {
+export async function loadThoughts(connectionId: string, userId?: string): Promise<Thought[]> {
   const { data, error } = await supabase
     .from('thoughts')
     .select('id,connection_id,sender_id,body,ciphertext,nonce,encryption_version,created_at')
@@ -39,7 +39,18 @@ export async function loadThoughts(connectionId: string, userId: string): Promis
 
   const stored = (data ?? []) as StoredThought[]
   const hasEncrypted = stored.some((thought) => thought.encryption_version !== null)
-  const connectionKey = hasEncrypted ? await getConnectionKey(connectionId, userId) : null
+
+  let connectionKey: Uint8Array | null = null
+  if (hasEncrypted) {
+    let resolvedUserId = userId
+    if (!resolvedUserId) {
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+      resolvedUserId = authData.user?.id
+    }
+    if (!resolvedUserId) throw new Error('Sign in is required to decrypt Thoughts.')
+    connectionKey = await getConnectionKey(connectionId, resolvedUserId)
+  }
 
   return stored.map((thought) => {
     if (
