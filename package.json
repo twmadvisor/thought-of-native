@@ -26,5 +26,8 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
+  },
+  "allowScripts": {
+    "react-native-libsodium@1.7.0": true
   }
 }
