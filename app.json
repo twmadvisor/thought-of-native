@@ -2,7 +2,7 @@
   "expo": {
     "name": "thought of",
     "slug": "thought-of",
-    "version": "0.3.0",
+    "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/thought-of-logo-1024.png",
     "userInterfaceStyle": "light",
