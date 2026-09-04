@@ -26,7 +26,6 @@ export type EncryptedThoughtPayload = {
 export async function loadIdentitySeed(userId: string): Promise<Uint8Array | null> {
   const saved = await Keychain.getGenericPassword({
     service: identityService(userId),
-    cloudSync: true,
   })
 
   if (!saved) return null
@@ -43,10 +42,12 @@ export async function createIdentitySeed(userId: string): Promise<Uint8Array> {
   const seed = randombytes_buf(crypto_box_SEEDBYTES)
   await Keychain.setGenericPassword(userId, to_base64(seed), {
     service: identityService(userId),
-    cloudSync: true,
     accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
   })
-  return seed
+
+  const persisted = await loadIdentitySeed(userId)
+  if (!persisted) throw new Error('Could not securely store the encryption key on this device.')
+  return persisted
 }
 
 export function publicKeyForIdentitySeed(seed: Uint8Array): string {
