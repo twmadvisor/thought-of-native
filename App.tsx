@@ -90,7 +90,8 @@ export default function App() {
         setEncryptionReady(true)
       })
       .catch(() => {
-        setEncryptionReady(true)
+        setRecoveryRequired(true)
+        setEncryptionReady(false)
       })
   }, [profileReady, session?.user.id])
 
@@ -164,7 +165,7 @@ export default function App() {
       <View style={styles.empty}>
         <Text style={styles.heading}>Your encryption key doesn&apos;t match</Text>
         <Text style={styles.mutedCentered}>
-          Thought Of can&apos;t safely open your encrypted history on this device. Make sure this iPhone is signed in to the same Apple Account, then try again.
+          Thought Of can&apos;t safely open your encrypted history on this device.
         </Text>
         <Button label="Try again" onPress={retryEncryptionRecovery} />
         <Button label="Sign out" onPress={() => supabase.auth.signOut()} />
@@ -175,9 +176,9 @@ export default function App() {
   if (recoveryRequired) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.heading}>Restoring your encrypted history</Text>
+        <Text style={styles.heading}>Your encryption key isn&apos;t available</Text>
         <Text style={styles.mutedCentered}>
-          Thought Of found your account, but your encryption key hasn&apos;t restored from iCloud Keychain yet. Make sure this iPhone is signed in to the same Apple Account, then try again.
+          Thought Of found your account, but this iPhone doesn&apos;t currently have the encryption key needed for your encrypted history.
         </Text>
         <Button label="Try again" onPress={retryEncryptionRecovery} />
         <Button label="Sign out" onPress={() => supabase.auth.signOut()} />
@@ -190,7 +191,7 @@ export default function App() {
   if (screen.name === 'groups') return <GroupsScreen session={session} onBack={() => setScreen({ name: 'home' })} />
   if (screen.name === 'account') return <AccountScreen session={session} onBack={() => setScreen({ name: 'home' })} onGroups={() => setScreen({ name: 'groups' })} onArchives={() => setScreen({ name: 'archives' })} />
   if (screen.name === 'archives') return <ArchivesScreen onBack={() => setScreen({ name: 'account' })} onViewHistory={(archive) => setScreen({ name: 'archivedHistory', archive })} />
-  if (screen.name === 'archivedHistory') return <ArchivedHistoryScreen userId={session.user.id} archive={screen.archive} onBack={() => setScreen({ name: 'archives' })} />
+  if (screen.name === 'archivedHistory') return <ArchivedHistoryScreen userId={session.user.id} archive={screen.name === 'archivedHistory' ? screen.archive : undefined as never} onBack={() => setScreen({ name: 'archives' })} />
 
   return <HomeScreen session={session} onOpenPerson={(person) => setScreen({ name: 'person', person })} onOpenRequests={() => setScreen({ name: 'requests' })} onOpenGroups={() => setScreen({ name: 'groups' })} onOpenAccount={() => setScreen({ name: 'account' })} />
 }
