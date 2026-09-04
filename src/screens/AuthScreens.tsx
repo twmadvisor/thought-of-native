@@ -140,7 +140,10 @@ export function ProfileSetup({ userId, onDone }: { userId: string; onDone: () =>
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.authWrap}>
+      <KeyboardAvoidingView
+        style={styles.authWrap}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <Image source={logo} style={styles.logoSmall} resizeMode="contain" />
         <Text style={styles.heading}>What should people call you?</Text>
         <TextInput
@@ -152,7 +155,7 @@ export function ProfileSetup({ userId, onDone }: { userId: string; onDone: () =>
           style={[styles.input, { marginTop: 18, marginBottom: 12 }]}
         />
         <Button label={busy ? 'Saving…' : 'Continue'} onPress={createProfile} disabled={busy} />
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
