@@ -191,7 +191,7 @@ export default function App() {
   if (screen.name === 'groups') return <GroupsScreen session={session} onBack={() => setScreen({ name: 'home' })} />
   if (screen.name === 'account') return <AccountScreen session={session} onBack={() => setScreen({ name: 'home' })} onGroups={() => setScreen({ name: 'groups' })} onArchives={() => setScreen({ name: 'archives' })} />
   if (screen.name === 'archives') return <ArchivesScreen onBack={() => setScreen({ name: 'account' })} onViewHistory={(archive) => setScreen({ name: 'archivedHistory', archive })} />
-  if (screen.name === 'archivedHistory') return <ArchivedHistoryScreen userId={session.user.id} archive={screen.name === 'archivedHistory' ? screen.archive : undefined as never} onBack={() => setScreen({ name: 'archives' })} />
+  if (screen.name === 'archivedHistory') return <ArchivedHistoryScreen userId={session.user.id} archive={screen.archive} onBack={() => setScreen({ name: 'archives' })} />
 
   return <HomeScreen session={session} onOpenPerson={(person) => setScreen({ name: 'person', person })} onOpenRequests={() => setScreen({ name: 'requests' })} onOpenGroups={() => setScreen({ name: 'groups' })} onOpenAccount={() => setScreen({ name: 'account' })} />
 }
