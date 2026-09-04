@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native'
 import type { Session } from '@supabase/supabase-js'
 import { createGroup, deleteGroup, Group, loadGroupState, renameDefaultGroup, updateGroup } from '../api/groups'
 import { loadPeople, Person } from '../api/connections'
@@ -85,19 +85,21 @@ export function GroupsScreen({ session, onBack }: { session: Session; onBack: ()
           })}
         </ScrollView>
         <Modal visible={!!editor} transparent animationType="slide" onRequestClose={() => setEditor(null)}>
-          <View style={styles.modalBackdrop}><View style={[styles.sheet, { maxHeight: '82%' }]}>
-            <Text style={styles.heading}>{editor === 'new' ? 'New Group' : 'Manage Group'}</Text>
-            <Text style={styles.smallMuted}>Groups are private and never change a person's Thought history.</Text>
-            <TextInput value={groupName} onChangeText={setGroupName} maxLength={30} placeholder="Group name" style={styles.input} />
-            <ScrollView style={{ maxHeight: 360 }}>
-              {sortedPeople.map((person) => { const checked = selected.has(person.connectionId); return (
-                <Pressable key={person.connectionId} style={styles.checkRow} onPress={() => togglePerson(person.connectionId)}><Text style={styles.checkMark}>{checked ? '●' : '○'}</Text><Text style={styles.accountLinkText}>{person.privateName || person.name}</Text></Pressable>
-              ) })}
-            </ScrollView>
-            <Button label={busy ? 'Saving…' : 'Save'} onPress={saveEditor} disabled={busy} />
-            {editor && editor !== 'new' && <Pressable style={styles.dangerOutline} onPress={() => confirmDelete(editor)}><Text style={styles.dangerText}>Delete group</Text></Pressable>}
-            <Pressable onPress={() => setEditor(null)}><Text style={styles.link}>Cancel</Text></Pressable>
-          </View></View>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={styles.modalBackdrop}><View style={[styles.sheet, { maxHeight: '82%' }]}>
+              <Text style={styles.heading}>{editor === 'new' ? 'New Group' : 'Manage Group'}</Text>
+              <Text style={styles.smallMuted}>Groups are private and never change a person's Thought history.</Text>
+              <TextInput value={groupName} onChangeText={setGroupName} maxLength={30} placeholder="Group name" style={styles.input} />
+              <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
+                {sortedPeople.map((person) => { const checked = selected.has(person.connectionId); return (
+                  <Pressable key={person.connectionId} style={styles.checkRow} onPress={() => togglePerson(person.connectionId)}><Text style={styles.checkMark}>{checked ? '●' : '○'}</Text><Text style={styles.accountLinkText}>{person.privateName || person.name}</Text></Pressable>
+                ) })}
+              </ScrollView>
+              <Button label={busy ? 'Saving…' : 'Save'} onPress={saveEditor} disabled={busy} />
+              {editor && editor !== 'new' && <Pressable style={styles.dangerOutline} onPress={() => confirmDelete(editor)}><Text style={styles.dangerText}>Delete group</Text></Pressable>}
+              <Pressable onPress={() => setEditor(null)}><Text style={styles.link}>Cancel</Text></Pressable>
+            </View></View>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </SafeAreaView>
