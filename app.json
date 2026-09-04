@@ -15,7 +15,8 @@
         "CFBundleDisplayName": "thought of",
         "UIBackgroundModes": [
           "remote-notification"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,7 +27,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow thought of to choose a profile photo."
+          "photosPermission": "Allow thought of to choose a profile photo.",
+          "microphonePermission": false
         }
       ],
       [
